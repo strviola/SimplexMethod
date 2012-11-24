@@ -29,3 +29,26 @@ class Variable:
 
     def domain_condition(self, arg):
         return self.cond(arg)
+
+
+class RowLine:
+    def __init__(self, var, coefficients):
+        self.var = var
+        self.coef = coefficients
+
+    def __add__(self, other):
+        return map(lambda x, y: x + y, self.coef, other.coef)
+
+    def __mul__(self, const):
+        return map(lambda x: x * const, self.coef)
+
+    def __getitem__(self, index):
+        return self.coef[index]
+
+
+class Tabuleau:
+    def __init__(self, rows):
+        self.rows = rows
+
+    def gaussian_eliminate(self):
+        pass
