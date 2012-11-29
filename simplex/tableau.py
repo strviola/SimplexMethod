@@ -132,12 +132,17 @@ class Tableau:
         self.var[slack_i].satisfy_condition()
         self.var[nslack_i].val += slack_diff / coef
         # gaussian elimination
-        
+        self.gaussian_elimination(slack_i, nslack_i)
+        # update the variables
+        pass
+
 
 if __name__ == '__main__':
-    table = Tableau([Variable(0, True), Variable(0, False),
-                     Variable(0, False), Variable(0, True),
-                     Variable(0, True)],
+    table = Tableau([Variable(0, False),
+                     Variable(0, False),
+                     Variable(0, True, 2, '>='),
+                     Variable(0, True, 0, '>='),
+                     Variable(0, True, 1, '>=')],
                     [RowLine([0, 0, 0, 0, 0]),
                     RowLine([0, 0, 0, 0, 0]),
                     RowLine([1, 1, -1, 0, 0]),
@@ -146,29 +151,3 @@ if __name__ == '__main__':
     print table
     table.gaussian_elimination(2, 0)
     print table
-    # '''
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
