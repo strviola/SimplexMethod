@@ -4,6 +4,7 @@ Created on 2012/11/22
 @author: SuzukiRyota
 '''
 
+
 class Variable:
     def __init__(self, val, slack, dom=None, dom_type=None):
         self.val = float(val)
@@ -65,10 +66,10 @@ class RowLine:
         return RowLine(map(lambda x, y: x - y, self.coef, other))
 
     def __mul__(self, const):
-        return RowLine(map(lambda x: x * const, self.coef))
+        return RowLine(map(lambda x: x * float(const), self.coef))
 
     def __div__(self, const):
-        return RowLine(map(lambda x: x / const, self.coef))
+        return RowLine(map(lambda x: x / float(const), self.coef))
 
     def __getitem__(self, index):
         return self.coef[index]
@@ -101,9 +102,8 @@ class Tableau:
         # change the new slack variable
         self.rows[jpivot] -= self.rows[ipivot]
 
-    def simplex_method(self, status=''):
+    def simplex_method(self):
         print self
-        status += str(self)
         # search the slack variable that not satisfies condition
         found = False
         for i, v in enumerate(self.var):
@@ -114,7 +114,8 @@ class Tableau:
                 found = True
                 break
         if not found:  # all variables satisfy condition
-            return status + 'Satisfiable.'
+            print 'Satisfiable.'
+            return
         # search the non-slack variable to satisfy condition
         found = False
         for i, v in enumerate(self.var):
@@ -133,18 +134,19 @@ class Tableau:
                         found = True
                         break
         if not found:  # the non-slack variable
-            return status + 'Unsatisfiable.'
+            print 'Unsatisfiable.'
+            return
         # exchange the slack variable
         self.var[slack_i].flip_slack()
         self.var[nslack_i].flip_slack()
-        status += str(self)
+        print self
         # update the value
         self.var[slack_i].satisfy_condition()
         self.var[nslack_i].val += slack_diff / coef
-        status += str(self)
+        print self
         # gaussian elimination
         self.gaussian_elimination(slack_i, nslack_i)
-        status += str(self)
+        print self
         # update the variables
         nslack_vars = [v.val_not_slack() for v in self.var]
         for i, v in enumerate(self.var):
@@ -152,9 +154,8 @@ class Tableau:
                 self.var[i].val = reduce(lambda x, y: x + y,
                                          map(lambda x, y: x * y,
                                              nslack_vars, self.rows[i].coef))
-        status += 'Iteration.\n'
-        # iteration
-        self.simplex_method(status=status)
+        print 'Iteration.'
+        self.simplex_method()
 
 
 if __name__ == '__main__':
@@ -169,4 +170,4 @@ if __name__ == '__main__':
                     RowLine([2, -1, 0, -1, 0]),
                     RowLine([-1, 2, 0, 0, -1])])
 
-    print table.simplex_method()
+    table.simplex_method()
