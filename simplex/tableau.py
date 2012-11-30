@@ -6,7 +6,7 @@ Created on 2012/11/22
 
 class Variable:
     def __init__(self, val, slack, dom=None, dom_type=None):
-        self.val = val
+        self.val = float(val)
         self.slack = bool(slack)
         self.dom = dom
         self.type = dom_type
@@ -28,9 +28,9 @@ class Variable:
 
     def __str__(self):
         if self.dom is None:
-            return '(%f, %s)' % (self.val, self.slack)
+            return '(%.1f, %s)' % (self.val, self.slack)
         else:
-            return ('(%f %s %f, %s)' %
+            return ('(%.1f %s %.1f, %s)' %
                     (self.val, self.type, self.dom, self.slack))
 
     def flip_slack(self):
@@ -50,6 +50,9 @@ class Variable:
         # if type == '>=': retval > 0 else: retval < 0
         return self.dom - self.val
 
+    def val_not_slack(self):
+        return self.val if not self.slack else 0
+
 
 class RowLine:
     def __init__(self, coef_list):
@@ -63,9 +66,6 @@ class RowLine:
 
     def __mul__(self, const):
         return RowLine(map(lambda x: x * const, self.coef))
-
-    def __rmul__(self, const):
-        return self.__mul__(const)
 
     def __div__(self, const):
         return RowLine(map(lambda x: x / const, self.coef))
@@ -89,7 +89,7 @@ class Tableau:
         for r in self.rows:
             info_row += str(r)
             info_row += '\n'
-        return info_var + info_row
+        return info_var + info_row + '\n'
 
     def gaussian_elimination(self, ipivot, jpivot):
         # divide pivot coefficient to 1
@@ -101,40 +101,60 @@ class Tableau:
         # change the new slack variable
         self.rows[jpivot] -= self.rows[ipivot]
 
-    def simplex_method(self):
+    def simplex_method(self, status=''):
+        print self
+        status += str(self)
         # search the slack variable that not satisfies condition
+        found = False
         for i, v in enumerate(self.var):
-            if v.slack and not v.self.condition():
+            if v.slack and not v.self_condition():
                 slack_i = i
                 slack_diff = v.get_dom_sub_val()
                 slack_dom = v.dom
+                found = True
                 break
-            return 'Satisfiable.'  # all variables satisfy condition
+        if not found:  # all variables satisfy condition
+            return status + 'Satisfiable.'
         # search the non-slack variable to satisfy condition
+        found = False
         for i, v in enumerate(self.var):
             coef = self.rows[slack_i][i]  # rows expresses the coefficients
-            if not v.slack:  # find a non-slack variable
+            if not v.slack:  # found a non-slack variable
                 if slack_diff > 0:  # increase to minimum
                     if ((coef < 0 and v.val > slack_dom) or
                         (coef > 0 and v.val < slack_dom)):
                         nslack_i = i
+                        found = True
                         break
                 elif slack_diff < 0:  # decrease to maximum
                     if ((coef < 0 and v.val < slack_dom) or
                         (coef > 0 and v.val > slack_dom)):
                         nslack_i = i
+                        found = True
                         break
-            return 'Unsatisfiable.'  # not found the non-slack variable
+        if not found:  # the non-slack variable
+            return status + 'Unsatisfiable.'
         # exchange the slack variable
         self.var[slack_i].flip_slack()
         self.var[nslack_i].flip_slack()
+        status += str(self)
         # update the value
         self.var[slack_i].satisfy_condition()
         self.var[nslack_i].val += slack_diff / coef
+        status += str(self)
         # gaussian elimination
         self.gaussian_elimination(slack_i, nslack_i)
+        status += str(self)
         # update the variables
-        pass
+        nslack_vars = [v.val_not_slack() for v in self.var]
+        for i, v in enumerate(self.var):
+            if v.slack:
+                self.var[i].val = reduce(lambda x, y: x + y,
+                                         map(lambda x, y: x * y,
+                                             nslack_vars, self.rows[i].coef))
+        status += 'Iteration.\n'
+        # iteration
+        self.simplex_method(status=status)
 
 
 if __name__ == '__main__':
@@ -148,6 +168,5 @@ if __name__ == '__main__':
                     RowLine([1, 1, -1, 0, 0]),
                     RowLine([2, -1, 0, -1, 0]),
                     RowLine([-1, 2, 0, 0, -1])])
-    print table
-    table.gaussian_elimination(2, 0)
-    print table
+
+    print table.simplex_method()
