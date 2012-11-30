@@ -26,7 +26,8 @@ if __name__ == '__main__':
         var_mes = 'variables: '
         attr_win.addstr(1, 0, for_mes)
         attr_win.addstr(2, 0, var_mes)
-        attr_win.addstr(4, 0, 'Use arrow keys to move.')
+        attr_win.addstr(4, 0, 'Use W, S keys as arrow keys to move.')
+        attr_win.addstr(5, 0, 'Press A key to delete a character.')
         # remember cursor
         for_cur_y, for_cur_x = 1, len(for_mes)
         var_cur_y, var_cur_x = 2, len(var_mes)
@@ -38,7 +39,7 @@ if __name__ == '__main__':
         for_buf = ''
         var_buf = ''
 
-        # user input
+        # user input to number of formulas and variables
         while True:
             c = attr_win.getkey()
             # delete the alert message
@@ -58,7 +59,7 @@ if __name__ == '__main__':
                     var_buf += c
                     var_cur_x += 1
                     attr_win.move(var_cur_y, var_cur_x)
-            elif c == 'B' or c == '\n':
+            elif c == 'S' or c == 's' or c == '\n':
                 # arrow down key or enter key
                 if cursor_on_formula:  # move cursor from formula to variable
                     cursor_on_formula = False
@@ -71,15 +72,13 @@ if __name__ == '__main__':
                         attr_win.addstr('The input is not valid.')
                         cursor_on_formula = True
                         attr_win.move(for_cur_y, for_cur_x)
-                    else:
-                        exit_mes = 'Go to next step.'
-                        break
-            elif c == 'A':
+                    else: break
+            elif c == 'W' or c == 'w':
                 # arrow up key: move cursor from variable to formula
                 if not cursor_on_formula:
                     cursor_on_formula = True
                     attr_win.move(for_cur_y, for_cur_x)
-            elif c == 'D':  # arrow left key: backspace
+            elif c == 'A' or c == 'a':  # arrow left key: backspace
                 if cursor_on_formula:
                     if len(for_buf) >= 1:
                         attr_win.delch(for_cur_y, for_cur_x - 1)
@@ -92,12 +91,31 @@ if __name__ == '__main__':
                         var_buf = var_buf[0: len(var_buf) - 1]
                         var_cur_x -= 1
                         attr_win.move(var_cur_y, var_cur_x)
-            elif c == 'C': pass  # arrow right key
             elif c == 'q':  # quit
                 raise Exception('Exit by quit key.')
             else:
                 attr_win.move(win_bottom, 0)
                 attr_win.addstr('The input %s is not a digit.' % c)
+
+        # result of each numbers
+        for_num = int(for_buf)
+        var_num = int(var_buf)
+        # change the window
+        attr_win.erase()
+        form_win = stdscr.subwin(3, 0)
+        form_win.addstr(0, 0, 'Input %d formulas with %d variables.' %
+                        (for_num, var_num))
+        usage_text = 'For example: '
+        for i in range(var_num):
+            usage_text += '%d ' % i
+        usage_text += '>= %d' % var_num
+        form_win.addstr(for_num + 2, 0, usage_text)
+        # user input to formulas
+        while True:
+            c = form_win.getkey()
+            if c == 'q': break
+
+        exit_mes = 'Program terminated successfully.'
 
     except Exception, e:
         exit_mes = '%s, %s' % (type(e), e)
@@ -108,4 +126,3 @@ if __name__ == '__main__':
         curses.echo()
         curses.endwin()
         print exit_mes
-        print for_buf, var_buf
