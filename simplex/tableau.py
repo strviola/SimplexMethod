@@ -73,9 +73,9 @@ class RowLine:
 
 
 class Tableau:
-    def __init__(self, var, rows):
+    def __init__(self, var, row_list):
         self.var = var
-        self.rows = rows
+        self.rows = row_list
 
     def __str__(self):
         info_var = 'var:['
@@ -118,7 +118,7 @@ class Tableau:
         print 'Searching the non-slack variable to satisfy condition...'
         found = False
         for i, v in enumerate(self.var):
-            coef = self.rows[slack_i][i]  # rows expresses the coefficients
+            coef = self.rows[slack_i][i]  # expresses the coefficients
             if not v.slack:  # found a non-slack variable
                 if slack_diff > 0:  # increase to minimum
                     if ((coef < 0 and v.val > slack_dom) or

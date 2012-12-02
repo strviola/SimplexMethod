@@ -5,6 +5,7 @@ Created on 2012/11/22
 '''
 
 import curses
+from tableau import Variable, RowLine, Tableau
 
 
 def bottom_alert(window, sentence):
@@ -146,7 +147,6 @@ if __name__ == '__main__':
                     buf[for_nth] += c + '= '
                     cur_x += 3
                     var_nth += 1
-                    first_flag = False
                 else:
                     bottom_alert(form_win, 'You cannot input %s here.' % c)
             elif c == '\n':  # move to next formula
@@ -159,13 +159,20 @@ if __name__ == '__main__':
                 else:
                     break
             elif c == 'd' or c == 'D':
-                if len(attr_buf[for_nth]) >= 1:
-                    form_win.delch(cur_y, cur_x - 1)
+                if len(buf[for_nth]) >= 1:
                     if buf[for_nth][-1] == ' ':  # last token is space
                         var_nth -= 1
                         first_flag = True
-                    buf[for_nth] = buf[for_nth][: -1]
+                    elif buf[for_nth][-1] == '=':  # ineq sign
+                        form_win.delch(cur_y, cur_x - 1)
+                        cur_x -= 1
+                        buf[for_nth] = buf[for_nth][: -2]
+                        first_flag = True
+                    else:
+                        first_flag = False
+                    form_win.delch(cur_y, cur_x - 1)
                     cur_x -= 1
+                    buf[for_nth] = buf[for_nth][: -1]
                 else:
                     bottom_alert(form_win, 'The input is already empty.')
             elif c == 'q':
@@ -174,9 +181,11 @@ if __name__ == '__main__':
                 bottom_alert(form_win, 'You cannot input %s to here.' % c)
 
         exit_mes = 'Processing...'
+        input_ok = True
 
     except Exception, e:
         exit_mes = '%s, %s' % (type(e), e)
+        input_ok = False
 
     finally:
         # return to normal window
@@ -188,3 +197,28 @@ if __name__ == '__main__':
         # convert the input to simplex tableau
         print exit_mes
         print buf
+
+        # do simplex method
+        if input_ok:
+            # split buffers to formulas
+            formulas = [b.split() for b in buf]  # formulas[var_num] is ineq
+            # make variables
+            var_list = []
+            for vi in range(var_num):
+                var_list.append(Variable(0, False))
+            for fe in formulas:
+                var_list.append(Variable(0, True, float(fe[var_num + 1]),
+                                         fe[var_num]))  # ineq type
+            # make coefficient tableau
+            row_list = []
+            for ri in range(var_num):
+                row_list.append(RowLine([0] * (var_num + for_num)))
+            for i, fe in enumerate(formulas):
+                tmp_f = [float(e) for e in fe[:var_num]]
+                tmp_zeros = [0] * for_num
+                tmp_zeros[i] = -1
+                row_list.append(RowLine(tmp_f + tmp_zeros))
+            # simplex tableau
+            table = Tableau(var_list, row_list)
+            # do simplex method
+            table.simplex_method()
