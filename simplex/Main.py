@@ -41,7 +41,7 @@ if __name__ == '__main__':
         # initialize input environment
         attr_win.move(cur_y, cur_x)
         cursor_on_formula = True
-        buffers = [''] * 2
+        attr_buf = [''] * 2
         input_nth = 0
 
         # user input to number of formulas and variables
@@ -55,7 +55,7 @@ if __name__ == '__main__':
             if c in '0123456789':  # digit
                 attr_win.move(cur_y, cur_x)
                 attr_win.addstr(c)
-                buffers[input_nth] += c
+                attr_buf[input_nth] += c
                 cur_x += 1
                 attr_win.move(cur_y, cur_x)
             elif c == '\n':  # enter key
@@ -63,16 +63,17 @@ if __name__ == '__main__':
                     input_nth += 1
                     cur_y, cur_x = 2, len(var_mes)
                 else:  # determine the input
-                    if (buffers[0] == '' or buffers[1] == '' or
-                        int(buffers[0]) == 0 or int(buffers[1]) == 0):
+                    if (attr_buf[0] == '' or attr_buf[1] == '' or
+                        int(attr_buf[0]) == 0 or int(attr_buf[1]) == 0):
                         # no input or number is 0
                         bottom_alert(attr_win, 'The input is not valid.')
                         attr_win.move(cur_y, cur_x)
-                    else: break
+                    else:
+                        break
             elif c == 'D' or c == 'd':  # arrow left key: backspace
-                if len(buffers[input_nth]) >= 1:
+                if len(attr_buf[input_nth]) >= 1:
                     attr_win.delch(cur_y, cur_x - 1)
-                    buffers[input_nth] = buffers[input_nth][: -1]
+                    attr_buf[input_nth] = attr_buf[input_nth][: -1]
                     cur_x -= 1
                     attr_win.move(cur_y, cur_x)
                 else:
@@ -83,8 +84,8 @@ if __name__ == '__main__':
                 bottom_alert(attr_win, 'The input %s is not a digit.' % c)
 
         # result of each numbers
-        for_num = int(buffers[0])
-        var_num = int(buffers[1])
+        for_num = int(attr_buf[0])
+        var_num = int(attr_buf[1])
         # change the window
         attr_win.erase()
         form_win = stdscr.subwin(4, 0)
@@ -105,7 +106,7 @@ if __name__ == '__main__':
         for_nth = 0  # <= for_num
         var_nth = 0  # var_nth[n] <= var_num
         # buffers
-        buffers = [''] * for_num
+        buf = [''] * for_num
         # user input to formulas
         while True:
             form_win.move(cur_y, cur_x)
@@ -116,7 +117,7 @@ if __name__ == '__main__':
             form_win.move(cur_y, cur_x)
             if c in '0123456789':
                 if var_nth <= var_num - 1 or var_nth == var_num + 1:
-                    buffers[for_nth] += c
+                    buf[for_nth] += c
                     form_win.addstr(c)
                     cur_x += 1
                     first_flag = False
@@ -125,7 +126,7 @@ if __name__ == '__main__':
             elif c == '-':
                 if first_flag:
                     form_win.addstr(c)
-                    buffers[for_nth] += c
+                    buf[for_nth] += c
                     cur_x += 1
                     first_flag = False
                 else:
@@ -133,7 +134,7 @@ if __name__ == '__main__':
             elif c == ' ':
                 if var_nth <= var_num - 1 and not first_flag:
                     form_win.addstr(c)
-                    buffers[for_nth] += c
+                    buf[for_nth] += c
                     var_nth += 1
                     cur_x += 1
                     first_flag = True
@@ -142,7 +143,7 @@ if __name__ == '__main__':
             elif (c == '<' or c == '>') and first_flag:
                 if var_nth == var_num:
                     form_win.addstr(c + "=")
-                    buffers[for_nth] += c + '= '
+                    buf[for_nth] += c + '= '
                     cur_x += 3
                     var_nth += 1
                     first_flag = False
@@ -154,15 +155,16 @@ if __name__ == '__main__':
                     cur_y += 1
                     cur_x = 0
                     for_nth += 1
+                    first_flag = True
                 else:
                     break
             elif c == 'd' or c == 'D':
-                if len(buffers[for_nth]) >= 1:
+                if len(attr_buf[for_nth]) >= 1:
                     form_win.delch(cur_y, cur_x - 1)
-                    if buffers[-1] == ' ':  # last token is space
+                    if buf[for_nth][-1] == ' ':  # last token is space
                         var_nth -= 1
                         first_flag = True
-                    buffers[for_nth] = buffers[for_nth][: -1]
+                    buf[for_nth] = buf[for_nth][: -1]
                     cur_x -= 1
                 else:
                     bottom_alert(form_win, 'The input is already empty.')
@@ -171,7 +173,7 @@ if __name__ == '__main__':
             else:
                 bottom_alert(form_win, 'You cannot input %s to here.' % c)
 
-        exit_mes = 'Program terminated successfully.'
+        exit_mes = 'Processing...'
 
     except Exception, e:
         exit_mes = '%s, %s' % (type(e), e)
@@ -184,4 +186,5 @@ if __name__ == '__main__':
         curses.endwin()
 
         # convert the input to simplex tableau
-        pass
+        print exit_mes
+        print buf
