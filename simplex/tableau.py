@@ -37,14 +37,11 @@ class Variable:
     def flip_slack(self):
         self.slack = not self.slack
 
-    def domain_condition(self, arg):
-        return self.cond(arg)
-
     def self_condition(self):
         return self.cond(self.val)
 
     def satisfy_condition(self):
-        if not self.domain_condition(self.val):
+        if not self.self_condition():
             self.val = self.dom
 
     def get_dom_sub_val(self):
@@ -103,8 +100,9 @@ class Tableau:
         self.rows[jpivot] -= self.rows[ipivot]
 
     def simplex_method(self):
+        print 'Initial:'
         print self
-        # search the slack variable that not satisfies condition
+        print 'Searching the slack variable that not satisfies condition...'
         found = False
         for i, v in enumerate(self.var):
             if v.slack and not v.self_condition():
@@ -112,11 +110,12 @@ class Tableau:
                 slack_diff = v.get_dom_sub_val()
                 slack_dom = v.dom
                 found = True
+                print v
                 break
         if not found:  # all variables satisfy condition
             print 'Satisfiable.'
             return
-        # search the non-slack variable to satisfy condition
+        print 'Searching the non-slack variable to satisfy condition...'
         found = False
         for i, v in enumerate(self.var):
             coef = self.rows[slack_i][i]  # rows expresses the coefficients
@@ -126,48 +125,36 @@ class Tableau:
                         (coef > 0 and v.val < slack_dom)):
                         nslack_i = i
                         found = True
+                        print coef, v
                         break
                 elif slack_diff < 0:  # decrease to maximum
                     if ((coef < 0 and v.val < slack_dom) or
                         (coef > 0 and v.val > slack_dom)):
                         nslack_i = i
                         found = True
+                        print coef, v
                         break
         if not found:  # the non-slack variable
             print 'Unsatisfiable.'
             return
-        # exchange the slack variable
+        print 'Exchange the slack variable.'
         self.var[slack_i].flip_slack()
         self.var[nslack_i].flip_slack()
         print self
-        # update the value
+        print 'Update the value.'
         self.var[slack_i].satisfy_condition()
         self.var[nslack_i].val += slack_diff / coef
         print self
-        # gaussian elimination
+        print 'Do Gaussian elimination.'
         self.gaussian_elimination(slack_i, nslack_i)
         print self
-        # update the variables
+        print 'Update the slack variables.'
         nslack_vars = [v.val_not_slack() for v in self.var]
         for i, v in enumerate(self.var):
             if v.slack:
                 self.var[i].val = reduce(lambda x, y: x + y,
                                          map(lambda x, y: x * y,
                                              nslack_vars, self.rows[i].coef))
+        print self
         print 'Iteration.'
         self.simplex_method()
-
-
-if __name__ == '__main__':
-    table = Tableau([Variable(0, False),
-                     Variable(0, False),
-                     Variable(0, True, 2, '>='),
-                     Variable(0, True, 0, '>='),
-                     Variable(0, True, 1, '>=')],
-                    [RowLine([0, 0, 0, 0, 0]),
-                    RowLine([0, 0, 0, 0, 0]),
-                    RowLine([1, 1, -1, 0, 0]),
-                    RowLine([2, -1, 0, -1, 0]),
-                    RowLine([-1, 2, 0, 0, -1])])
-
-    table.simplex_method()
